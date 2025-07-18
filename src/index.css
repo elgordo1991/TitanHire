@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Accessibility improvements */
+@layer base {
+  /* Focus styles for better keyboard navigation */
+  *:focus {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+  }
+  
+  /* Ensure sufficient color contrast */
+  .text-gray-400 {
+    @apply text-gray-500;
+  }
+  
+  /* Improve button accessibility */
+  button:disabled {
+    @apply cursor-not-allowed opacity-50;
+  }
+  
+  /* Better form field styling */
+  input, textarea, select {
+    @apply transition-colors duration-200;
+  }
+  
+  /* Responsive text sizing */
+  html {
+    font-size: 16px;
+  }
+  
+  @media (max-width: 640px) {
+    html {
+      font-size: 14px;
+    }
+  }
+}
+
+/* Custom scrollbar for better UX */
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(156 163 175) transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: rgb(156 163 175);
+    border-radius: 3px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(107 114 128);
+  }
+}
