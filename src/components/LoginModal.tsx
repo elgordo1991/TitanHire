@@ -42,19 +42,19 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
     } else {
       onLogin(email, password);
       onClose();
+      // Reset form
+      setEmail('');
+      setPassword('');
+      setConfirmPassword('');
+      setFullName('');
+      setRole('');
     }
   } catch (error) {
     console.error('Authentication error:', error);
     alert('Authentication failed. Please try again.');
+  } finally {
+    setIsLoading(false);
   }
-
-  setIsLoading(false);
-  setEmail('');
-  setPassword('');
-  setConfirmPassword('');
-  setFullName('');
-  setRole('');
-  setIsSignUp(false);
 };
 
 

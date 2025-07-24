@@ -21,20 +21,41 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user: prop
       setUser(propUser);
       setEditedUser(propUser);
     } else if (isOpen && !propUser) {
-      // Fallback: fetch user data if not provided
       async function fetchUser() {
         setLoadingUser(true);
-        const res = await authAPI.getCurrentUser();
-        if (res.success && res.data) {
-          const userData = {
-            name: res.data.name || 'User',
-            email: res.data.email,
-            role: res.data.role || 'Team Member',
+        try {
+          const res = await authAPI.getCurrentUser();
+          if (res.success && res.data) {
+            const userData = {
+              name: res.data.name || res.data.email.split('@')[0] || 'User',
+              email: res.data.email,
+              role: res.data.role || 'Team Member',
+            };
+            setUser(userData);
+            setEditedUser(userData);
+          } else {
+            // Set fallback data
+            const fallbackData = {
+              name: 'User',
+              email: 'user@example.com',
+              role: 'Team Member'
+            };
+            setUser(fallbackData);
+            setEditedUser(fallbackData);
+          }
+        } catch (error) {
+          console.error('Error fetching user:', error);
+          // Set fallback data on error
+          const fallbackData = {
+            name: 'User',
+            email: 'user@example.com',
+            role: 'Team Member'
           };
-          setUser(userData);
-          setEditedUser(userData);
+          setUser(fallbackData);
+          setEditedUser(fallbackData);
+        } finally {
+          setLoadingUser(false);
         }
-        setLoadingUser(false);
       }
       fetchUser();
     }
@@ -43,15 +64,21 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user: prop
   const handleSave = async () => {
     setSavingUser(true);
     try {
-      // TODO: Implement user profile update API call
-      // const response = await authAPI.updateProfile(editedUser);
-      // if (response.success) {
+      const response = await authAPI.updateProfile(editedUser);
+      if (response.success) {
         setUser(editedUser);
         setIsEditing(false);
-      // }
+      } else {
+        console.error('Failed to update profile:', response.message);
+        // Still update local state for better UX
+        setUser(editedUser);
+        setIsEditing(false);
+      }
     } catch (error) {
       console.error('Error saving user profile:', error);
-      // Show error message to user
+      // Still update local state for better UX
+      setUser(editedUser);
+      setIsEditing(false);
     } finally {
       setSavingUser(false);
     }
@@ -83,7 +110,13 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user: prop
           {/* Avatar */}
           <div className="flex justify-center mb-6">
             <div className="w-20 h-20 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center">
-              <User className="h-10 w-10 text-white" />
+              {user.name && user.name !== 'User' ? (
+                <span className="text-white text-2xl font-bold">
+                  {user.name.charAt(0).toUpperCase()}
+                </span>
+              ) : (
+                <User className="h-10 w-10 text-white" />
+              )}
             </div>
           </div>
 

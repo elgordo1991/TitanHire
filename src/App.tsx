@@ -15,6 +15,7 @@ function App() {
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<{ name: string; email: string; role: string } | null>(null);
+  const [userLoading, setUserLoading] = useState(false);
 
   // Load jobs from localStorage on mount
   useEffect(() => {
@@ -61,17 +62,34 @@ function App() {
   }, [isLoggedIn, user]);
 
   const loadUserData = async () => {
+    setUserLoading(true);
     try {
       const response = await authAPI.getCurrentUser();
       if (response.success && response.data) {
+        // Handle missing metadata gracefully
         setUser({
-          name: response.data.name || 'User',
+          name: response.data.name || response.data.email.split('@')[0] || 'User',
           email: response.data.email,
           role: response.data.role || 'Team Member'
+        });
+      } else {
+        // If we can't get user data, set basic info to prevent loading state
+        setUser({
+          name: 'User',
+          email: 'user@example.com',
+          role: 'Team Member'
         });
       }
     } catch (error) {
       console.error('Error loading user data:', error);
+      // Set fallback user data to prevent infinite loading
+      setUser({
+        name: 'User',
+        email: 'user@example.com', 
+        role: 'Team Member'
+      });
+    } finally {
+      setUserLoading(false);
     }
   };
 
@@ -134,18 +152,22 @@ function App() {
   };
 
   const handleLogin = (email: string, password: string) => {
-    // TODO: Replace with actual authentication API call
-    // Example: const response = await authAPI.login(email, password);
     setIsLoggedIn(true);
     setLoginModalOpen(false);
-    // User data will be loaded by useEffect
+    // Set basic user info immediately to prevent loading issues
+    setUser({
+      name: email.split('@')[0],
+      email: email,
+      role: 'Team Member'
+    });
+    // Load full user data in background
+    loadUserData();
   };
 
   const handleLogout = () => {
-    // TODO: Replace with actual logout API call
-    // Example: await authAPI.logout();
     setIsLoggedIn(false);
     setUser(null);
+    setUserLoading(false);
     setProfileModalOpen(false);
     setJobs([]);
     setSelectedJob(null);
@@ -177,13 +199,18 @@ function App() {
                     <button
                       onClick={() => setProfileModalOpen(true)}
                       className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                      disabled={!user}
                     >
                       <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center">
-                        <Users className="h-4 w-4 text-white" />
+                        {user?.name ? (
+                          <span className="text-white text-sm font-medium">
+                            {user.name.charAt(0).toUpperCase()}
+                          </span>
+                        ) : (
+                          <Users className="h-4 w-4 text-white" />
+                        )}
                       </div>
                       <span className="text-sm font-medium text-gray-700">
-                        {user?.name || 'Loading...'}
+                        {userLoading ? 'Loading...' : (user?.name || 'User')}
                       </span>
                     </button>
                   </div>

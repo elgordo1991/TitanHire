@@ -33,11 +33,16 @@ export const authAPI = {
     if (error || !data.user) {
       return { data: null as any, success: false, message: error?.message || 'Login failed' };
     }
+    
+    // Handle missing metadata gracefully
+    const metadata = data.user.user_metadata || {};
+    const displayName = metadata.fullName || metadata.full_name || email.split('@')[0];
+    
     const user: User = {
       id: data.user.id,
-      name: data.user.user_metadata?.fullName || data.user.user_metadata?.full_name || 'User',
+      name: displayName,
       email: data.user.email!,
-      role: data.user.user_metadata?.role || 'Team Member',
+      role: metadata.role || 'Team Member',
     };
     return { data: user, success: true };
   },
@@ -76,11 +81,16 @@ export const authAPI = {
     if (error || !data.user) {
       return { data: null as any, success: false, message: error?.message || 'No user logged in' };
     }
+    
+    // Handle missing metadata gracefully
+    const metadata = data.user.user_metadata || {};
+    const displayName = metadata.fullName || metadata.full_name || data.user.email!.split('@')[0];
+    
     const user: User = {
       id: data.user.id,
-      name: data.user.user_metadata?.fullName || data.user.user_metadata?.full_name || 'User',
+      name: displayName,
       email: data.user.email!,
-      role: data.user.user_metadata?.role || 'Team Member',
+      role: metadata.role || 'Team Member',
     };
     return { data: user, success: true };
   },
