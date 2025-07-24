@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users } from 'lucide-react';
 import { Job } from './types/Job';
+import { authAPI } from './services/api';
 import JobDashboard from './components/JobDashboard';
 import JobWorkflow from './components/JobWorkflow';
 import LoginModal from './components/LoginModal';
