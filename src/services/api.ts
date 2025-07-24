@@ -33,12 +33,11 @@ export const authAPI = {
     if (error || !data.user) {
       return { data: null as any, success: false, message: error?.message || 'Login failed' };
     }
-    // You can enhance this mapping as needed:
     const user: User = {
       id: data.user.id,
-      name: data.user.user_metadata?.fullName || '',
+      name: data.user.user_metadata?.fullName || data.user.user_metadata?.full_name || 'User',
       email: data.user.email!,
-      role: data.user.user_metadata?.role || '',
+      role: data.user.user_metadata?.role || 'Team Member',
     };
     return { data: user, success: true };
   },
@@ -59,7 +58,7 @@ export const authAPI = {
       id: signUpData.user.id,
       name: fullName,
       email: signUpData.user.email!,
-      role: role,
+      role: role || 'Team Member',
     };
     return { data: user, success: true };
   },
@@ -79,11 +78,39 @@ export const authAPI = {
     }
     const user: User = {
       id: data.user.id,
-      name: data.user.user_metadata?.fullName || '',
+      name: data.user.user_metadata?.fullName || data.user.user_metadata?.full_name || 'User',
       email: data.user.email!,
-      role: data.user.user_metadata?.role || '',
+      role: data.user.user_metadata?.role || 'Team Member',
     };
     return { data: user, success: true };
+  },
+
+  async updateProfile(userData: { name: string; email: string; role: string }): Promise<ApiResponse<User>> {
+    try {
+      const { data, error } = await supabase.auth.updateUser({
+        email: userData.email,
+        data: { 
+          fullName: userData.name,
+          full_name: userData.name, // Some systems use this format
+          role: userData.role 
+        }
+      });
+      
+      if (error) {
+        return { data: null as any, success: false, message: error.message };
+      }
+      
+      const user: User = {
+        id: data.user.id,
+        name: userData.name,
+        email: userData.email,
+        role: userData.role,
+      };
+      
+      return { data: user, success: true };
+    } catch (error) {
+      return { data: null as any, success: false, message: 'Failed to update profile' };
+    }
   }
 };
 

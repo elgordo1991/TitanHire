@@ -13,7 +13,7 @@ function App() {
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState({ name: 'Sarah Johnson', email: 'sarah@titanbay.com', role: 'Senior Talent Partner' });
+  const [user, setUser] = useState<{ name: string; email: string; role: string } | null>(null);
 
   // Load jobs from localStorage on mount
   useEffect(() => {
@@ -51,6 +51,28 @@ function App() {
       }
     }
   }, [jobs]);
+
+  // Load user data when logged in
+  useEffect(() => {
+    if (isLoggedIn && !user) {
+      loadUserData();
+    }
+  }, [isLoggedIn, user]);
+
+  const loadUserData = async () => {
+    try {
+      const response = await authAPI.getCurrentUser();
+      if (response.success && response.data) {
+        setUser({
+          name: response.data.name || 'User',
+          email: response.data.email,
+          role: response.data.role || 'Team Member'
+        });
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    }
+  };
 
   const createNewJob = () => {
     const newJob: Job = {
@@ -115,12 +137,14 @@ function App() {
     // Example: const response = await authAPI.login(email, password);
     setIsLoggedIn(true);
     setLoginModalOpen(false);
+    // User data will be loaded by useEffect
   };
 
   const handleLogout = () => {
     // TODO: Replace with actual logout API call
     // Example: await authAPI.logout();
     setIsLoggedIn(false);
+    setUser(null);
     setProfileModalOpen(false);
     setJobs([]);
     setSelectedJob(null);
@@ -152,11 +176,14 @@ function App() {
                     <button
                       onClick={() => setProfileModalOpen(true)}
                       className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                      disabled={!user}
                     >
                       <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center">
                         <Users className="h-4 w-4 text-white" />
                       </div>
-                      <span className="text-sm font-medium text-gray-700">{user.name}</span>
+                      <span className="text-sm font-medium text-gray-700">
+                        {user?.name || 'Loading...'}
+                      </span>
                     </button>
                   </div>
                 ) : (

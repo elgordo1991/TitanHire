@@ -5,41 +5,56 @@ import { authAPI } from '../services/api';
 interface ProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
+  user: { name: string; email: string; role: string } | null;
   onLogout: () => void;
 }
 
-const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onLogout }) => {
+const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user: propUser, onLogout }) => {
   const [user, setUser] = useState({ name: '', email: '', role: '' });
   const [editedUser, setEditedUser] = useState({ name: '', email: '', role: '' });
   const [isEditing, setIsEditing] = useState(false);
-  const [loadingUser, setLoadingUser] = useState(true);
+  const [loadingUser, setLoadingUser] = useState(false);
+  const [savingUser, setSavingUser] = useState(false);
 
   useEffect(() => {
-    if (!isOpen) return;
-    async function fetchUser() {
-      setLoadingUser(true);
-      const res = await authAPI.getCurrentUser();
-      if (res.success && res.data) {
-        setUser({
-          name: res.data.name,
-          email: res.data.email,
-          role: res.data.role,
-        });
-        setEditedUser({
-          name: res.data.name,
-          email: res.data.email,
-          role: res.data.role,
-        });
+    if (propUser) {
+      setUser(propUser);
+      setEditedUser(propUser);
+    } else if (isOpen && !propUser) {
+      // Fallback: fetch user data if not provided
+      async function fetchUser() {
+        setLoadingUser(true);
+        const res = await authAPI.getCurrentUser();
+        if (res.success && res.data) {
+          const userData = {
+            name: res.data.name || 'User',
+            email: res.data.email,
+            role: res.data.role || 'Team Member',
+          };
+          setUser(userData);
+          setEditedUser(userData);
+        }
+        setLoadingUser(false);
       }
-      setLoadingUser(false);
+      fetchUser();
     }
-    fetchUser();
-  }, [isOpen]);
+  }, [isOpen, propUser]);
 
-  const handleSave = () => {
-    setUser(editedUser);
-    setIsEditing(false);
-    // (Optional) Save to backend here if you add profile editing!
+  const handleSave = async () => {
+    setSavingUser(true);
+    try {
+      // TODO: Implement user profile update API call
+      // const response = await authAPI.updateProfile(editedUser);
+      // if (response.success) {
+        setUser(editedUser);
+        setIsEditing(false);
+      // }
+    } catch (error) {
+      console.error('Error saving user profile:', error);
+      // Show error message to user
+    } finally {
+      setSavingUser(false);
+    }
   };
 
   const handleCancel = () => {
@@ -143,13 +158,15 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onLogout }
                 <div className="flex space-x-3">
                   <button
                     onClick={handleSave}
+                    disabled={savingUser}
                     className="flex-1 flex items-center justify-center px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-medium hover:from-purple-700 hover:to-blue-700 transition-all duration-200"
                   >
                     <Save className="h-4 w-4 mr-2" />
-                    Save Changes
+                    {savingUser ? 'Saving...' : 'Save Changes'}
                   </button>
                   <button
                     onClick={handleCancel}
+                    disabled={savingUser}
                     className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
                   >
                     Cancel
