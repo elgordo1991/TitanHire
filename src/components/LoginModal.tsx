@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Mail, Lock, Eye, EyeOff, User, Briefcase } from 'lucide-react';
+import { authAPI } from '../services/api';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -18,39 +19,45 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
   const [isLoading, setIsLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (isSignUp && password !== confirmPassword) {
-      alert('Passwords do not match');
-      return;
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  if (isSignUp && password !== confirmPassword) {
+    alert('Passwords do not match');
+    return;
+  }
+
+  setIsLoading(true);
+
+  try {
+    let response;
+    if (isSignUp) {
+      response = await authAPI.register({ fullName, email, role, password });
+    } else {
+      response = await authAPI.login({ email, password });
     }
-    
-    setIsLoading(true);
-    
-    try {
-      // TODO: Replace with actual authentication API
-      // if (isSignUp) {
-      //   await authAPI.register({ fullName, email, role, password });
-      // } else {
-      //   await authAPI.login({ email, password });
-      // }
-      
-      // Simulate API call for now
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
+    if (!response.success) {
+      alert(response.message || 'Authentication failed. Please try again.');
+    } else {
       onLogin(email, password);
-    } catch (error) {
-      console.error('Authentication error:', error);
-      alert('Authentication failed. Please try again.');
+      onClose();
     }
-    
-    setIsLoading(false);
-    setEmail('');
-    setPassword('');
-    setConfirmPassword('');
-    setIsSignUp(false);
-  };
+  } catch (error) {
+    console.error('Authentication error:', error);
+    alert('Authentication failed. Please try again.');
+  }
+
+  setIsLoading(false);
+  setEmail('');
+  setPassword('');
+  setConfirmPassword('');
+  setFullName('');
+  setRole('');
+  setIsSignUp(false);
+};
+
+
 
   const toggleMode = () => {
     setIsSignUp(!isSignUp);

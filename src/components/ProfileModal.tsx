@@ -1,24 +1,45 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, User, Mail, Briefcase, LogOut, Edit3, Save } from 'lucide-react';
+import { authAPI } from '../services/api';
 
 interface ProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
-  user: {
-    name: string;
-    email: string;
-    role: string;
-  };
   onLogout: () => void;
 }
 
-const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user, onLogout }) => {
+const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onLogout }) => {
+  const [user, setUser] = useState({ name: '', email: '', role: '' });
+  const [editedUser, setEditedUser] = useState({ name: '', email: '', role: '' });
   const [isEditing, setIsEditing] = useState(false);
-  const [editedUser, setEditedUser] = useState(user);
+  const [loadingUser, setLoadingUser] = useState(true);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    async function fetchUser() {
+      setLoadingUser(true);
+      const res = await authAPI.getCurrentUser();
+      if (res.success && res.data) {
+        setUser({
+          name: res.data.name,
+          email: res.data.email,
+          role: res.data.role,
+        });
+        setEditedUser({
+          name: res.data.name,
+          email: res.data.email,
+          role: res.data.role,
+        });
+      }
+      setLoadingUser(false);
+    }
+    fetchUser();
+  }, [isOpen]);
 
   const handleSave = () => {
+    setUser(editedUser);
     setIsEditing(false);
-    // In a real app, you would save to backend here
+    // (Optional) Save to backend here if you add profile editing!
   };
 
   const handleCancel = () => {
@@ -52,101 +73,107 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user, onLo
           </div>
 
           {/* User Info */}
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Full Name
-              </label>
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={editedUser.name}
-                  onChange={(e) => setEditedUser({ ...editedUser, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                />
-              ) : (
-                <div className="flex items-center">
-                  <User className="h-4 w-4 text-gray-400 mr-2" />
-                  <span className="text-gray-900">{user.name}</span>
-                </div>
-              )}
-            </div>
+          {loadingUser ? (
+            <div className="text-center text-gray-500">Loading profile...</div>
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Full Name
+                </label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={editedUser.name}
+                    onChange={(e) => setEditedUser({ ...editedUser, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  />
+                ) : (
+                  <div className="flex items-center">
+                    <User className="h-4 w-4 text-gray-400 mr-2" />
+                    <span className="text-gray-900">{user.name}</span>
+                  </div>
+                )}
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
-              {isEditing ? (
-                <input
-                  type="email"
-                  value={editedUser.email}
-                  onChange={(e) => setEditedUser({ ...editedUser, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                />
-              ) : (
-                <div className="flex items-center">
-                  <Mail className="h-4 w-4 text-gray-400 mr-2" />
-                  <span className="text-gray-900">{user.email}</span>
-                </div>
-              )}
-            </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email
+                </label>
+                {isEditing ? (
+                  <input
+                    type="email"
+                    value={editedUser.email}
+                    onChange={(e) => setEditedUser({ ...editedUser, email: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  />
+                ) : (
+                  <div className="flex items-center">
+                    <Mail className="h-4 w-4 text-gray-400 mr-2" />
+                    <span className="text-gray-900">{user.email}</span>
+                  </div>
+                )}
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Role
-              </label>
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={editedUser.role}
-                  onChange={(e) => setEditedUser({ ...editedUser, role: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                />
-              ) : (
-                <div className="flex items-center">
-                  <Briefcase className="h-4 w-4 text-gray-400 mr-2" />
-                  <span className="text-gray-900">{user.role}</span>
-                </div>
-              )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Role
+                </label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={editedUser.role}
+                    onChange={(e) => setEditedUser({ ...editedUser, role: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  />
+                ) : (
+                  <div className="flex items-center">
+                    <Briefcase className="h-4 w-4 text-gray-400 mr-2" />
+                    <span className="text-gray-900">{user.role}</span>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Action Buttons */}
-          <div className="mt-6 space-y-3">
-            {isEditing ? (
-              <div className="flex space-x-3">
+          {!loadingUser && (
+            <div className="mt-6 space-y-3">
+              {isEditing ? (
+                <div className="flex space-x-3">
+                  <button
+                    onClick={handleSave}
+                    className="flex-1 flex items-center justify-center px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-medium hover:from-purple-700 hover:to-blue-700 transition-all duration-200"
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Changes
+                  </button>
+                  <button
+                    onClick={handleCancel}
+                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
                 <button
-                  onClick={handleSave}
-                  className="flex-1 flex items-center justify-center px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-medium hover:from-purple-700 hover:to-blue-700 transition-all duration-200"
+                  onClick={() => setIsEditing(true)}
+                  className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
                 >
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Changes
+                  <Edit3 className="h-4 w-4 mr-2" />
+                  Edit Profile
                 </button>
-                <button
-                  onClick={handleCancel}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-              >
-                <Edit3 className="h-4 w-4 mr-2" />
-                Edit Profile
-              </button>
-            )}
+              )}
 
-            <button
-              onClick={onLogout}
-              className="w-full flex items-center justify-center px-4 py-2 border border-red-300 text-red-700 rounded-lg font-medium hover:bg-red-50 transition-colors"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
-            </button>
-          </div>
+              <button
+                onClick={onLogout}
+                className="w-full flex items-center justify-center px-4 py-2 border border-red-300 text-red-700 rounded-lg font-medium hover:bg-red-50 transition-colors"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
