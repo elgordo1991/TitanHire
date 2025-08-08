@@ -1,6 +1,15 @@
 // API service layer for backend integration
 // TODO: Replace with actual API endpoints
 import { supabase } from './supabaseClient';
+import type { Job } from '../types/Job';
+
+// Network error handler
+const handleNetworkError = (error: any) => {
+  if (error.message?.includes('Failed to fetch') || error.name === 'TypeError') {
+    throw new Error('Unable to connect to the server. Please check your internet connection and try again.');
+  }
+  throw error;
+};
 
 export interface AuthCredentials {
   email: string;
